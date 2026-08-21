@@ -26,8 +26,13 @@ export function Header() {
             height={44}
             className="h-11 w-11 rounded-full object-cover"
           />
-          <span className="font-display text-2xl tracking-[0.35em] text-gold-gradient">
-            TYMLYN
+          <span className="flex flex-col leading-none">
+            <span className="font-display text-2xl tracking-[0.35em] text-gold-gradient">
+              TYMLYN
+            </span>
+            <span className="text-[0.55rem] tracking-[0.5em] text-muted-foreground">
+              PAK
+            </span>
           </span>
         </Link>
 
