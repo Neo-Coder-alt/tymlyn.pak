@@ -17,7 +17,7 @@ export function Footer() {
             className="h-14 w-14 rounded-full object-cover"
           />
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
-            Tymlyn crafts gold-toned timepieces for people who value precision and
+            Tymlyn Pak crafts gold-toned timepieces for people who value precision and
             presence. Delivered across Pakistan.
           </p>
         </div>
@@ -83,7 +83,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-border/60 py-6 text-center text-xs tracking-[0.2em] text-muted-foreground">
-        © {new Date().getFullYear()} TYMLYN — ALL RIGHTS RESERVED
+        © {new Date().getFullYear()} TYMLYN PAK — ALL RIGHTS RESERVED
       </div>
     </footer>
   );
