@@ -7,31 +7,39 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { products, type Product } from "@/lib/products";
+import type { Product } from "@/lib/catalog";
+import { effectivePrice } from "@/lib/catalog";
 
-export type CartLine = { id: string; qty: number };
+export type CartLine = {
+  id: string;
+  slug: string;
+  name: string;
+  category: string;
+  image: string | null;
+  price: number;
+  qty: number;
+};
 
 type CartContextValue = {
-  lines: CartLine[];
-  items: { product: Product; qty: number }[];
+  items: CartLine[];
   count: number;
   subtotal: number;
-  add: (id: string, qty?: number) => void;
+  add: (product: Product, qty?: number) => void;
   setQty: (id: string, qty: number) => void;
   remove: (id: string) => void;
   clear: () => void;
 };
 
-const STORAGE_KEY = "tymlyn-cart";
+const STORAGE_KEY = "tymlyn-cart-v2";
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [lines, setLines] = useState<CartLine[]>([]);
+  const [items, setItems] = useState<CartLine[]>([]);
 
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) setLines(JSON.parse(raw) as CartLine[]);
+      if (raw) setItems(JSON.parse(raw) as CartLine[]);
     } catch {
       /* ignore */
     }
@@ -39,54 +47,57 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch {
       /* ignore */
     }
-  }, [lines]);
+  }, [items]);
 
-  const add = useCallback((id: string, qty = 1) => {
-    setLines((prev) => {
-      const found = prev.find((l) => l.id === id);
-      if (found) return prev.map((l) => (l.id === id ? { ...l, qty: l.qty + qty } : l));
-      return [...prev, { id, qty }];
+  const add = useCallback((product: Product, qty = 1) => {
+    setItems((prev) => {
+      const found = prev.find((l) => l.id === product.id);
+      if (found)
+        return prev.map((l) => (l.id === product.id ? { ...l, qty: l.qty + qty } : l));
+      return [
+        ...prev,
+        {
+          id: product.id,
+          slug: product.slug,
+          name: product.name,
+          category: product.category,
+          image: product.image,
+          price: effectivePrice(product),
+          qty,
+        },
+      ];
     });
   }, []);
 
   const setQty = useCallback((id: string, qty: number) => {
-    setLines((prev) =>
-      qty <= 0
-        ? prev.filter((l) => l.id !== id)
-        : prev.map((l) => (l.id === id ? { ...l, qty } : l)),
+    setItems((prev) =>
+      qty <= 0 ? prev.filter((l) => l.id !== id) : prev.map((l) => (l.id === id ? { ...l, qty } : l)),
     );
   }, []);
 
   const remove = useCallback(
-    (id: string) => setLines((prev) => prev.filter((l) => l.id !== id)),
+    (id: string) => setItems((prev) => prev.filter((l) => l.id !== id)),
     [],
   );
 
-  const clear = useCallback(() => setLines([]), []);
+  const clear = useCallback(() => setItems([]), []);
 
-  const value = useMemo<CartContextValue>(() => {
-    const items = lines
-      .map((l) => {
-        const product = products.find((p) => p.id === l.id);
-        return product ? { product, qty: l.qty } : null;
-      })
-      .filter(Boolean) as { product: Product; qty: number }[];
-
-    return {
-      lines,
+  const value = useMemo<CartContextValue>(
+    () => ({
       items,
       count: items.reduce((n, i) => n + i.qty, 0),
-      subtotal: items.reduce((n, i) => n + i.qty * i.product.price, 0),
+      subtotal: items.reduce((n, i) => n + i.qty * i.price, 0),
       add,
       setQty,
       remove,
       clear,
-    };
-  }, [lines, add, setQty, remove, clear]);
+    }),
+    [items, add, setQty, remove, clear],
+  );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
