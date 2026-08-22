@@ -1,31 +1,41 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { ProductCard } from "@/components/site/ProductCard";
-import { products } from "@/lib/products";
+import { listProducts } from "@/lib/catalog.functions";
+import { CATEGORIES } from "@/lib/catalog";
 
 export const Route = createFileRoute("/shop")({
+  loader: () => listProducts(),
   head: () => ({
     meta: [
-      { title: "Shop Watches | Tymlyn Gold & Black Timepieces" },
+      { title: "Shop Watches | Tymlyn Pak Gold & Black Timepieces" },
       {
         name: "description",
         content:
-          "Browse the full Tymlyn watch collection: chronographs, automatics, classic dress watches and ladies gold mesh models.",
+          "Browse the full Tymlyn Pak watch collection: chronographs, automatics, classic dress watches and ladies gold mesh models.",
       },
-      { property: "og:title", content: "Shop Watches | Tymlyn" },
+      { property: "og:title", content: "Shop Watches | Tymlyn Pak" },
       {
         property: "og:description",
-        content: "The full Tymlyn collection of gold and black luxury watches.",
+        content: "The full Tymlyn Pak collection of gold and black luxury watches.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Shop,
+  errorComponent: () => (
+    <div className="mx-auto max-w-3xl px-5 py-24 text-center text-sm text-muted-foreground">
+      The collection could not be loaded. Please refresh.
+    </div>
+  ),
 });
 
-const categories = ["All", "Chronograph", "Classic", "Automatic", "Ladies"] as const;
+const filters = ["All", ...CATEGORIES] as const;
 
 function Shop() {
-  const [active, setActive] = useState<(typeof categories)[number]>("All");
+  const products = Route.useLoaderData();
+  const [active, setActive] = useState<string>("All");
   const list = active === "All" ? products : products.filter((p) => p.category === active);
 
   return (
@@ -35,7 +45,7 @@ function Shop() {
       <div className="hairline my-8" />
 
       <div className="mb-10 flex flex-wrap gap-3">
-        {categories.map((c) => (
+        {filters.map((c) => (
           <button
             key={c}
             onClick={() => setActive(c)}
@@ -50,11 +60,15 @@ function Shop() {
         ))}
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {list.map((p, i) => (
-          <ProductCard key={p.id} product={p} index={i} />
-        ))}
-      </div>
+      {list.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No watches in this category yet.</p>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {list.map((p, i) => (
+            <ProductCard key={p.id} product={p} index={i} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
